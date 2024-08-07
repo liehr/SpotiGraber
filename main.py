@@ -1,4 +1,4 @@
-﻿import time
+import time
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import requests
@@ -24,8 +24,8 @@ oauth_object = SpotifyOAuth(client_id=SPOTIPY_CLIENT_ID,
 
 def get_spotify_object():
     """Authenticate and return a Spotify object."""
-    token_info = oauth_object.get_access_token(as_dict=True)
-    return spotipy.Spotify(auth=token_info['access_token'])
+    access_token = oauth_object.get_access_token(as_dict=False)
+    return spotipy.Spotify(auth=access_token)
 
 
 def download_image(url, save_path):
@@ -35,9 +35,9 @@ def download_image(url, save_path):
         response.raise_for_status()
         with open(save_path, 'wb') as f:
             f.write(response.content)
-        print(f"Image saved to {save_path}")
+        cprint(f"Image saved to {save_path}", "green")
     except requests.RequestException as e:
-        print(f"Failed to download image: {e}")
+        cprint(f"Failed to download image: {e}", "red", attrs=["bold"])
 
 
 def extract_track_id(spotify_url):
@@ -45,15 +45,40 @@ def extract_track_id(spotify_url):
     return spotify_url.split('/')[-1]
 
 
+def print_spotiwave():
+    ascii_art = """
+  .--.--.                           ___                     .---.                             
+ /  /    '. ,-.----.              ,--.'|_    ,--,          /. ./|                             
+|  :  /`. / \    /  \    ,---.    |  | :,' ,--.'|      .--'.  ' ;                             
+;  |  |--`  |   :    |  '   ,'\   :  : ' : |  |,      /__./ \ : |               .---.         
+|  :  ;_    |   | .\ : /   /   |.;__,'  /  `--'_  .--'.  '   \' .  ,--.--.    /.  ./|  ,---.  
+ \  \    `. .   : |: |.   ; ,. :|  |   |   ,' ,'|/___/ \ |    ' ' /       \ .-' . ' | /     \ 
+  `----.   \|   |  \ :'   | |: ::__,'| :   '  | |;   \  \;      :.--.  .-. /___/ \: |/    /  |
+  __ \  \  ||   : .  |'   | .; :  '  : |__ |  | : \   ;  `      | \__\/: . .   \  ' .    ' / |
+ /  /`--'  /:     |`-'|   :    |  |  | '.'|'  : |__.   \    .\  ; ," .--.; |\   \   '   ;   /|
+'--'.     / :   : :    \   \  /   ;  :    ;|  | '.'|\   \   ' \ |/  /  ,.  | \   \  '   |  / |
+  `--'---'  |   | :     `----'    |  ,   / ;  :    ; :   '  |--";  :   .'   \ \   \ |   :    |
+            `---'.|                ---`-'  |  ,   /   \   \ ;   |  ,     .-./  '---" \   \  / 
+              `---`                         ---`-'     '---"     `--`---'             `----'  
+"""
+    cprint(ascii_art, "green", attrs=["bold"])
+
+
 def main():
+    print_spotiwave()
+    cprint("Spotify Code Downloader", "green", attrs=["bold"])
+    cprint("This program downloads the Spotify code of the currently playing track to your desktop.", "yellow")
     spotify_object = get_spotify_object()
+    cprint("Successfully authenticated with Spotify.", "green", attrs=["bold"])
     external_urls = None
     last_refresh_time = time.time()
 
     def refresh_token():
         nonlocal spotify_object, last_refresh_time
         if time.time() - last_refresh_time > TOKEN_REFRESH_INTERVAL:
+            cprint("Refreshing access token...", "yellow")
             spotify_object = get_spotify_object()
+            cprint("Successfully refreshed access token.", "green", attrs=["bold"])
             last_refresh_time = time.time()
 
     def handle_currently_playing():
@@ -73,7 +98,8 @@ def main():
                 image_url = f"{BASE_IMAGE_URL}{track_id}"
                 artist_name = current['item']['artists'][0]['name']
                 track_name = current['item']['name']
-                print(f"New track detected: {artist_name} - {track_name}. Downloading image from {image_url}")
+                cprint(f"New track detected: {artist_name} - {track_name}. Downloading image from {image_url}", "blue",
+                       attrs=["bold"])
                 download_image(image_url, SAVE_PATH)
 
     while True:
