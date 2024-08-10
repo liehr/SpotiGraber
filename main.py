@@ -1,112 +1,60 @@
-import time
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-import requests
-import os
+import threading
 
-# Constants for Spotify API credentials and redirect URI
-SPOTIPY_CLIENT_ID = 'YOUR_CLIENT_ID'
-SPOTIPY_CLIENT_SECRET = 'YOUR_CLIENT_SECRET'
-SPOTIPY_REDIRECT_URI = 'http://localhost:8888/callback'  # Must be added to the Spotify app settings
-SCOPE = "user-read-currently-playing"
-TOKEN_REFRESH_INTERVAL = 3600  # Time in seconds
+from termcolor import cprint, colored
 
-# Base URL for constructing the scannable image link
-BASE_IMAGE_URL = 'https://scannables.scdn.co/uri/plain/png/000000/white/640/spotify:track:'
-SAVE_PATH = os.path.expanduser("~/Desktop/spotify_code.png")
-
-# Initialize the Spotify OAuth object
-oauth_object = SpotifyOAuth(client_id=SPOTIPY_CLIENT_ID,
-                            client_secret=SPOTIPY_CLIENT_SECRET,
-                            redirect_uri=SPOTIPY_REDIRECT_URI,
-                            scope=SCOPE)
+import SpotiWave
+import SpotiColor
 
 
-def get_spotify_object():
-    """Authenticate and return a Spotify object."""
-    access_token = oauth_object.get_access_token(as_dict=False)
-    return spotipy.Spotify(auth=access_token)
-
-
-def download_image(url, save_path):
-    """Download an image from the specified URL and save it to the given path."""
+def run_spotiwave():
     try:
-        response = requests.get(url)
-        response.raise_for_status()
-        with open(save_path, 'wb') as f:
-            f.write(response.content)
-        cprint(f"Image saved to {save_path}", "green")
-    except requests.RequestException as e:
-        cprint(f"Failed to download image: {e}", "red", attrs=["bold"])
+        SpotiWave.start_wave()
+    except Exception as e:
+        print(f"An error occurred in SpotiWave: {e}")
 
 
-def extract_track_id(spotify_url):
-    """Extract the track ID from the Spotify track URL."""
-    return spotify_url.split('/')[-1]
+def run_spoticolor():
+    try:
+        SpotiColor.start_color()
+    except Exception as e:
+        print(f"An error occurred in SpotiColor: {e}")
 
 
-def print_spotiwave():
+def start_program():
+    try:
+        wave_thread = threading.Thread(target=run_spotiwave)
+        color_thread = threading.Thread(target=run_spoticolor)
+
+        wave_thread.start()
+        color_thread.start()
+
+        wave_thread.join()
+        color_thread.join()
+    except KeyboardInterrupt:
+        print("Program terminated by user.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+
+def color_wave():
     ascii_art = """
-  .--.--.                           ___                     .---.                             
- /  /    '. ,-.----.              ,--.'|_    ,--,          /. ./|                             
-|  :  /`. / \    /  \    ,---.    |  | :,' ,--.'|      .--'.  ' ;                             
-;  |  |--`  |   :    |  '   ,'\   :  : ' : |  |,      /__./ \ : |               .---.         
-|  :  ;_    |   | .\ : /   /   |.;__,'  /  `--'_  .--'.  '   \' .  ,--.--.    /.  ./|  ,---.  
- \  \    `. .   : |: |.   ; ,. :|  |   |   ,' ,'|/___/ \ |    ' ' /       \ .-' . ' | /     \ 
-  `----.   \|   |  \ :'   | |: ::__,'| :   '  | |;   \  \;      :.--.  .-. /___/ \: |/    /  |
-  __ \  \  ||   : .  |'   | .; :  '  : |__ |  | : \   ;  `      | \__\/: . .   \  ' .    ' / |
- /  /`--'  /:     |`-'|   :    |  |  | '.'|'  : |__.   \    .\  ; ," .--.; |\   \   '   ;   /|
-'--'.     / :   : :    \   \  /   ;  :    ;|  | '.'|\   \   ' \ |/  /  ,.  | \   \  '   |  / |
-  `--'---'  |   | :     `----'    |  ,   / ;  :    ; :   '  |--";  :   .'   \ \   \ |   :    |
-            `---'.|                ---`-'  |  ,   /   \   \ ;   |  ,     .-./  '---" \   \  / 
-              `---`                         ---`-'     '---"     `--`---'             `----'  
+  ,----..             ,--,                                .---.                             
+ /   /   \          ,--.'|                               /. ./|                             
+|   :     :  ,---.  |  | :     ,---.    __  ,-.      .--'.  ' ;                             
+.   |  ;. / '   ,'\ :  : '    '   ,'\ ,' ,'/ /|     /__./ \ : |               .---.         
+.   ; /--` /   /   ||  ' |   /   /   |'  | |' | .--'.  '   \' .  ,--.--.    /.  ./|  ,---.  
+;   | ;   .   ; ,. :'  | |  .   ; ,. :|  |   ,'/___/ \ |    ' ' /       \ .-' . ' | /     \ 
+|   : |   '   | |: :|  | :  '   | |: :'  :  /  ;   \  \;      :.--.  .-. /___/ \: |/    /  |
+.   | '___'   | .; :'  : |__'   | .; :|  | '    \   ;  `      | \__\/: . .   \  ' .    ' / |
+'   ; : .'|   :    ||  | '.'|   :    |;  : |     .   \    .\  ; ," .--.; |\   \   '   ;   /|
+'   | '/  :\   \  / ;  :    ;\   \  / |  , ;      \   \   ' \ |/  /  ,.  | \   \  '   |  / |
+|   :    /  `----'  |  ,   /  `----'   ---'        :   '  |--";  :   .'   \ \   \ |   :    |
+ \   \ .'            ---`-'                         \   \ ;   |  ,     .-./  '---" \   \  / 
+  `---`                                              '---"     `--`---'             `----'  
 """
-    cprint(ascii_art, "green", attrs=["bold"])
-
-
-def main():
-    print_spotiwave()
-    cprint("Spotify Code Downloader", "green", attrs=["bold"])
-    cprint("This program downloads the Spotify code of the currently playing track to your desktop.", "yellow")
-    spotify_object = get_spotify_object()
-    cprint("Successfully authenticated with Spotify.", "green", attrs=["bold"])
-    external_urls = None
-    last_refresh_time = time.time()
-
-    def refresh_token():
-        nonlocal spotify_object, last_refresh_time
-        if time.time() - last_refresh_time > TOKEN_REFRESH_INTERVAL:
-            cprint("Refreshing access token...", "yellow")
-            spotify_object = get_spotify_object()
-            cprint("Successfully refreshed access token.", "green", attrs=["bold"])
-            last_refresh_time = time.time()
-
-    def handle_currently_playing():
-        nonlocal external_urls
-        current = spotify_object.currently_playing()
-        if not current:
-            return
-
-        if current.get('currently_playing_type') == 'ad':
-            time.sleep(30)  # Wait for the ad to finish
-        else:
-            new_external_urls = current['item']['external_urls']
-            if new_external_urls != external_urls:
-                external_urls = new_external_urls
-                track_url = external_urls['spotify']
-                track_id = extract_track_id(track_url)
-                image_url = f"{BASE_IMAGE_URL}{track_id}"
-                artist_name = current['item']['artists'][0]['name']
-                track_name = current['item']['name']
-                cprint(f"New track detected: {artist_name} - {track_name}. Downloading image from {image_url}", "blue",
-                       attrs=["bold"])
-                download_image(image_url, SAVE_PATH)
-
-    while True:
-        refresh_token()
-        handle_currently_playing()
-        time.sleep(5)  # Wait for a short period before checking again
+    cprint(ascii_art, "red", attrs=["bold"])
 
 
 if __name__ == "__main__":
-    main()
+    color_wave()
+    start_program()
