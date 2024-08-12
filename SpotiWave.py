@@ -1,5 +1,14 @@
-from Dependency import *  # Import all necessary dependencies
+import os
+import time
+
+import requests
+import spotipy
+from spotipy import SpotifyOAuth
+from termcolor import cprint
+
 # Constants for Spotify API credentials and redirect URI
+SPOTIPY_CLIENT_ID = 'YOUR_CLIENT_ID'  # Must be added to the Spotify app settings
+SPOTIPY_CLIENT_SECRET = 'YOUR_CLIENT_SECRET'  # Must be added to the Spotify app settings
 SPOTIPY_REDIRECT_URI = 'http://localhost:8888/callback'  # Must be added to the Spotify app settings
 SCOPE = "user-read-currently-playing, user-read-playback-state, user-modify-playback-state"
 TOKEN_REFRESH_INTERVAL = 2800  # Time in seconds

@@ -1,6 +1,6 @@
 import threading
 
-from termcolor import cprint, colored
+from termcolor import cprint
 
 import SpotiWave
 import SpotiColor

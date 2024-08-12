@@ -1,4 +1,15 @@
-﻿from Dependency import *  # Import all necessary dependencies
+﻿import binascii
+import os
+import time
+
+import imageio
+import numpy as np
+import scipy
+from scipy.cluster import hierarchy
+from PIL import Image
+from termcolor import cprint
+from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
 
 
 class ImageChangeHandler(FileSystemEventHandler):
@@ -9,7 +20,8 @@ class ImageChangeHandler(FileSystemEventHandler):
         if event.src_path == target_path and not self.processing:
             self.processing = True  # Set flag to True to prevent re-entry
             try:
-                process_image(target_path)
+                process_image(1, target_path)
+                process_image(12, target_path)
             except Exception as e:
                 cprint(f"Error processing image: {e}", "red", attrs=["bold"])
             finally:
@@ -35,13 +47,13 @@ def print_spotiwave():
     cprint(ascii_art, "green", attrs=["bold"])
 
 
-def process_image(image_path):
-    NUM_CLUSTERS = 1
+def process_image(cluster, image_path):
+    NUM_CLUSTERS = cluster
 
     try:
         cprint('Reading image...', "yellow")
         im = Image.open(image_path)
-        im = im.resize((150, 150))  # Resize to reduce processing time
+        im = im.resize((1200, 1200))  # Resize to reduce processing time
 
         ar = np.asarray(im)
         shape = ar.shape
@@ -60,18 +72,18 @@ def process_image(image_path):
         cprint(f'Most frequent colour is {peak} (# {colour})', "yellow")
 
         # Save image using only the N most common colours
-        save_clustered_image(ar, vecs, codes, shape)
+        save_clustered_image(ar, vecs, codes, shape, f'clustered_{NUM_CLUSTERS}.png')
     except Exception as e:
         cprint(f"Error during image processing: {e}", "red", attrs=["bold"])
 
 
-def save_clustered_image(ar, vecs, codes, shape):
+def save_clustered_image(ar, vecs, codes, shape, filename):
     try:
         clustered_array = ar.copy()
         for i, code in enumerate(codes):
             clustered_array[np.where(vecs == i)] = code
 
-        desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop', 'clusters.png')
+        desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop', filename)
         imageio.imwrite(desktop_path, clustered_array.reshape(*shape).astype(np.uint8))
         cprint(f'Saved clustered image to {desktop_path}', "green", attrs=["bold"])
     except Exception as e:
